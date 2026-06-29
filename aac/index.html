@@ -238,13 +238,12 @@ function speakTTS(text) {
 
 function stopCurrentAudio() {
   if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
-  speechSynthesis.cancel();
-  speechSynthesis.cancel();
+  if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
 }
 
 function playCardAudio(i) {
   return new Promise(resolve => {
-    stopCurrentAudio();
+    if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
     const c = cardsData[i];
     if (c.audioData) {
       try {
