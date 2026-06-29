@@ -197,6 +197,7 @@ let recordedBlob = null;
 let isRecording = false;
 let autoClearTimer = null;
 let tempImageDataUrl = null;
+let currentTTSPromise = null;
 
 function loadVoices() {
   voices = speechSynthesis.getVoices();
@@ -224,16 +225,18 @@ function saveVoice() {
 }
 
 function speakTTS(text) {
-  return new Promise(resolve => {
+  currentTTSPromise = new Promise(resolve => {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const v = getSelectedVoice();
     if (v) u.voice = v;
     u.lang = v ? v.lang : 'he-IL';
     u.rate = 0.85;
-    u.onend = resolve; u.onerror = resolve;
+    u.onend = () => { currentTTSPromise = null; resolve(); };
+    u.onerror = () => { currentTTSPromise = null; resolve(); };
     speechSynthesis.speak(u);
   });
+  return currentTTSPromise;
 }
 
 function stopCurrentAudio() {
@@ -487,9 +490,15 @@ function renderGrid() {
       renderOutput();
       scheduleAutoClear();
       if (navigator.vibrate) navigator.vibrate(30);
-      setTimeout(() => {
-        playCardAudio(i).then(() => card.classList.remove('playing'));
-      }, 1500);
+      const doPlay = () => playCardAudio(i).then(() => card.classList.remove('playing'));
+      const cardHasRecording = !!cardsData[i].audioData;
+      if (cardHasRecording && currentTTSPromise) {
+        // Let TTS finish naturally so iOS properly releases audio session
+        currentTTSPromise.then(() => setTimeout(doPlay, 150));
+      } else {
+        stopCurrentAudio();
+        doPlay();
+      }
     };
     grid.appendChild(div);
   });
