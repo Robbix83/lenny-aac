@@ -248,10 +248,12 @@ function playCardAudio(i) {
     const c = cardsData[i];
     if (c.audioData) {
       const audio = new Audio(c.audioData);
+      audio.volume = 1.0;
       currentAudio = audio;
       audio.onended = () => { currentAudio = null; resolve(); };
       audio.onerror = () => { currentAudio = null; resolve(); };
-      audio.play();
+      const playPromise = audio.play();
+      if (playPromise) playPromise.catch(() => { currentAudio = null; resolve(); });
     } else {
       speakTTS(c.phrase).then(resolve);
     }
@@ -464,7 +466,7 @@ function renderGrid() {
         if (!speechSynthesis.speaking) {
           setTimeout(() => {
             playCardAudio(i).then(() => card.classList.remove('playing'));
-          }, 250);
+          }, 700);
         } else {
           setTimeout(tryPlay, 30);
         }
