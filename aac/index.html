@@ -237,7 +237,8 @@ function speakTTS(text) {
 }
 
 function stopCurrentAudio() {
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
+  speechSynthesis.cancel();
   speechSynthesis.cancel();
 }
 
@@ -458,10 +459,15 @@ function renderGrid() {
       selected.push(i);
       renderOutput();
       scheduleAutoClear();
-      setTimeout(() => {
-        playCardAudio(i).then(() => card.classList.remove('playing'));
-      }, 80);
       if (navigator.vibrate) navigator.vibrate(30);
+      const tryPlay = () => {
+        if (!speechSynthesis.speaking) {
+          playCardAudio(i).then(() => card.classList.remove('playing'));
+        } else {
+          setTimeout(tryPlay, 30);
+        }
+      };
+      setTimeout(tryPlay, 50);
     };
     grid.appendChild(div);
   });
