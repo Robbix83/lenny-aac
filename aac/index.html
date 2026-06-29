@@ -462,7 +462,9 @@ function renderGrid() {
       if (navigator.vibrate) navigator.vibrate(30);
       const tryPlay = () => {
         if (!speechSynthesis.speaking) {
-          playCardAudio(i).then(() => card.classList.remove('playing'));
+          setTimeout(() => {
+            playCardAudio(i).then(() => card.classList.remove('playing'));
+          }, 250);
         } else {
           setTimeout(tryPlay, 30);
         }
