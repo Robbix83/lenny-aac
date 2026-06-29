@@ -226,15 +226,23 @@ function saveVoice() {
 
 function speakTTS(text) {
   currentTTSPromise = new Promise(resolve => {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const v = getSelectedVoice();
-    if (v) u.voice = v;
-    u.lang = v ? v.lang : 'he-IL';
-    u.rate = 0.85;
-    u.onend = () => { currentTTSPromise = null; resolve(); };
-    u.onerror = () => { currentTTSPromise = null; resolve(); };
-    speechSynthesis.speak(u);
+    const done = () => { currentTTSPromise = null; resolve(); };
+    const url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(text) + '&tl=he&client=gtx&ttsspeed=0.8';
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => { currentAudio = null; done(); };
+    audio.onerror = () => {
+      currentAudio = null;
+      // fallback to browser TTS
+      const u = new SpeechSynthesisUtterance(text);
+      const v = getSelectedVoice();
+      if (v) u.voice = v;
+      u.lang = v ? v.lang : 'he-IL';
+      u.rate = 0.85;
+      u.onend = done; u.onerror = done;
+      speechSynthesis.speak(u);
+    };
+    audio.play().catch(() => { currentAudio = null; audio.onerror(); });
   });
   return currentTTSPromise;
 }
@@ -490,15 +498,8 @@ function renderGrid() {
       renderOutput();
       scheduleAutoClear();
       if (navigator.vibrate) navigator.vibrate(30);
-      const doPlay = () => playCardAudio(i).then(() => card.classList.remove('playing'));
-      const cardHasRecording = !!cardsData[i].audioData;
-      if (cardHasRecording && currentTTSPromise) {
-        // Let TTS finish naturally so iOS properly releases audio session
-        currentTTSPromise.then(() => setTimeout(doPlay, 1600));
-      } else {
-        stopCurrentAudio();
-        doPlay();
-      }
+      stopCurrentAudio();
+      playCardAudio(i).then(() => card.classList.remove('playing'));
     };
     grid.appendChild(div);
   });
