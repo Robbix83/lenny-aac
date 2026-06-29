@@ -33,6 +33,7 @@
   .voice-row { display: flex; align-items: center; gap: 6px; flex: 1; }
   .voice-row label { font-size: 12px; color: #999; white-space: nowrap; }
   .voice-row select { flex: 1; font-size: 12px; border: 1px solid #ddd; border-radius: 8px; padding: 4px 6px; background: #fff; color: #333; }
+  .btn-add { background: #4a7cf7; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 20px; cursor: pointer; font-weight: 300; line-height: 1; }
   .btn-edit-mode { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; color: #555; white-space: nowrap; }
   .btn-edit-mode.active { background: #fff3e0; border-color: #ff9800; color: #e65100; }
 
@@ -128,7 +129,8 @@
       <label>קול:</label>
       <select id="voice-select" onchange="saveVoice()"></select>
     </div>
-    <button class="btn-edit-mode" id="edit-toggle" onclick="toggleEditMode()">✏️ עריכה</button>
+    <button class="btn-add" onclick="addCard()">+</button>
+  <button class="btn-edit-mode" id="edit-toggle" onclick="toggleEditMode()">✏️ עריכה</button>
   </div>
 </header>
 
@@ -289,6 +291,13 @@ function renderOutput() {
   ).join('');
 }
 
+function addCard() {
+  cardsData.push({ emoji: "⭐", label: "חדש", phrase: "כרטיס חדש" });
+  localStorage.setItem('cardsData', JSON.stringify(cardsData));
+  renderGrid();
+  openEdit(cardsData.length - 1);
+}
+
 function toggleEditMode() {
   editMode = !editMode;
   const btn = document.getElementById('edit-toggle');
@@ -442,7 +451,9 @@ function renderGrid() {
       '<span class="label">' + c.label + '</span>';
     div.onclick = () => {
       if (editMode) { openEdit(i); return; }
+      stopCurrentAudio();
       const card = document.getElementById('card-' + i);
+      document.querySelectorAll('.card.playing').forEach(c => c.classList.remove('playing'));
       card.classList.add('playing');
       playCardAudio(i).then(() => card.classList.remove('playing'));
       selected.push(i);
