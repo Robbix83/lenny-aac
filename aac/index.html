@@ -494,7 +494,7 @@ function renderGrid() {
       const cardHasRecording = !!cardsData[i].audioData;
       if (cardHasRecording && currentTTSPromise) {
         // Let TTS finish naturally so iOS properly releases audio session
-        currentTTSPromise.then(() => setTimeout(doPlay, 150));
+        currentTTSPromise.then(() => setTimeout(doPlay, 1600));
       } else {
         stopCurrentAudio();
         doPlay();
