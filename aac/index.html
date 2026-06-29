@@ -487,16 +487,25 @@ function renderGrid() {
       renderOutput();
       scheduleAutoClear();
       if (navigator.vibrate) navigator.vibrate(30);
+      // Immediately claim iOS audio session with silent buffer to override TTS ducking
+      let sessionCtx = null;
+      try {
+        sessionCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const silentBuf = sessionCtx.createBuffer(1, sessionCtx.sampleRate * 2, sessionCtx.sampleRate);
+        const silentSrc = sessionCtx.createBufferSource();
+        silentSrc.buffer = silentBuf;
+        silentSrc.connect(sessionCtx.destination);
+        silentSrc.start(0);
+      } catch(e) {}
       const tryPlay = () => {
         if (!speechSynthesis.speaking) {
-          setTimeout(() => {
-            playCardAudio(i).then(() => card.classList.remove('playing'));
-          }, 700);
+          if (sessionCtx) { try { sessionCtx.close(); } catch(e) {} sessionCtx = null; }
+          playCardAudio(i).then(() => card.classList.remove('playing'));
         } else {
           setTimeout(tryPlay, 30);
         }
       };
-      setTimeout(tryPlay, 50);
+      setTimeout(tryPlay, 30);
     };
     grid.appendChild(div);
   });
