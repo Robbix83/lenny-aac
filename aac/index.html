@@ -455,10 +455,12 @@ function renderGrid() {
       const card = document.getElementById('card-' + i);
       document.querySelectorAll('.card.playing').forEach(c => c.classList.remove('playing'));
       card.classList.add('playing');
-      playCardAudio(i).then(() => card.classList.remove('playing'));
       selected.push(i);
       renderOutput();
       scheduleAutoClear();
+      setTimeout(() => {
+        playCardAudio(i).then(() => card.classList.remove('playing'));
+      }, 80);
       if (navigator.vibrate) navigator.vibrate(30);
     };
     grid.appendChild(div);
